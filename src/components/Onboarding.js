@@ -1,5 +1,10 @@
+import React, {useState, useRef} from 'react'
 import {Box, Text, Image, FlatList} from '@gluestack-ui/themed';
 import OnboardingItem from './OnboardingItem';
+import Paginator from './Paginator';
+import {TogglerButton} from './TogglerButton';
+import {Animated } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Slides = [
   {
@@ -10,7 +15,7 @@ const Slides = [
   },
   {
       id:'2',
-      title:'Hello',
+      title:'Get Vitual Card',
       desc:'Get virtual card be able to spend internationally pay utility and so much more',
       src: require('../../assets/onboarding/creditcard.png') 
   },
@@ -23,16 +28,57 @@ const Slides = [
 
 ];
 
-export default Onboarding = () => {
+export default Onboarding = ( { navigation }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const scrollX = useRef(new Animated.Value(0)).current;
+
+  const viewableItemsChanged = useRef( ( { viewableItems }) =>{
+      setCurrentIndex(viewableItems[0].index);
+  }).current;
+
+  const viewConfig = useRef( { viewAreaCoveragePercentThreshold:50 }).current;
+
+  const slidesRef = useRef(null);
+
+
+  const scrollTo = async ()=>{
+     if ( currentIndex < Slides.length - 1 ){
+      slidesRef.current.scrollToIndex({ index: currentIndex + 1})
+     }else{
+       console.log("Slides Ended")
+       try {
+           await AsyncStorage.setItem('@visited','yes');
+           navigation.navigate('Home');
+       } catch (error) {
+         console.log('Error Setting Async Storage Item',error)
+       }
+     }
+  }
+
+
   return ( 
-    <FlatList
-      data={Slides}
-      renderItem={({ item }) => ( <OnboardingItem  item={item}/>)}
-      keyExtractor={(item) => item.id}
-      horizontal={true}
-      showsHorizontalScrollIndicator={false}
-      pagingEnabled={false}
-      bounces={false}
-    /> 
+    <Box alignItems="center" display="flex">
+          <FlatList
+            data={Slides}
+            renderItem={({ item }) => ( <OnboardingItem  item={item}/>)}
+            keyExtractor={(item) => item.id}
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+            pagingEnabled
+            bounces={false}
+            onScroll ={Animated.event([{nativeEvent: {contentOffset:{x: scrollX}}}],{
+              useNativeDriver:false
+            })}
+            scrollEventThrottle={32}
+            onViewableItemsChanged={viewableItemsChanged}
+            viewabilityConfig={viewConfig}
+            ref={slidesRef}
+          /> 
+          <Paginator data ={Slides} scrollX ={scrollX}/>
+          <TogglerButton scrollTo ={scrollTo} percentage={(currentIndex + 1) * (100 / 4)}/>
+
+    </Box>
+
   )
 }
