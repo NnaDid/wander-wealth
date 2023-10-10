@@ -7,6 +7,7 @@ export default OnboardingItem = ( { item } ) => {
         <Box 
           sx={{ '_dark': { borderColor: '$trueGray100',},   '@base': {pl: 0, pr: 0,},  '@sm': {  pl: '$4',pr: '$5',},}}
           py="$10"    width={width}  height={height/1.4} alignItems="center" display="flex" flexDirection="row"   
+        
         >
           <VStack space="lg">
             <Image source={item.src} alt="document"  height={200}  style={{width, resizeMode:'contain'}}/>
